@@ -2,7 +2,7 @@
   "name": "Workout Plan",
   "short_name": "Workout Plan",
   "description": "PPL workout tracker - Phase 1",
-  "start_url": "/",
+  "start_url": "/workout-plan/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
