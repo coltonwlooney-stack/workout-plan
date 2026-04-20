@@ -1,5 +1,5 @@
 const CACHE = 'workout-plan-v1';
-const ASSETS = ['/', '/index.html', '/app.js', '/style.css', '/manifest.json'];
+const ASSETS = ['/workout-plan/', '/workout-plan/index.html', '/workout-plan/app.js', '/workout-plan/style.css', '/workout-plan/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
