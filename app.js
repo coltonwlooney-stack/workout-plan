@@ -45,6 +45,7 @@ const DEFAULT_PROGRAM = {
   ]},
 };
 
+// All history including 4/20 Push A and 4/21 Pull A from screenshots
 const SEED_HISTORY = {
   'Push A': [
     { date:'3/9',  exercises:{ 'Incline DB Press':[{w:'65',r:'8'},{w:'65',r:'7'},{w:'65',r:'6'},{w:'65',r:'6'}],'Flat BB Bench':[{w:'165',r:'10'},{w:'170',r:'9'},{w:'185',r:'8'}],'Seated DB Shoulder Press':[{w:'35',r:'10'},{w:'35',r:'9'},{w:'35',r:'8'}],'Cable Lateral Raises':[{w:'12.5',r:'15'},{w:'12.5',r:'14'},{w:'12.5',r:'12'}],'Cable Tri. Pushdown':[{w:'47.5',r:'12'},{w:'52.5',r:'11'},{w:'52.5',r:'10'}],'Overhead Cable Tri. Ext.':[{w:'37.5',r:'12'},{w:'37.5',r:'12'}] }},
@@ -52,6 +53,7 @@ const SEED_HISTORY = {
     { date:'3/30', exercises:{ 'Incline DB Press':[{w:'65',r:'8'},{w:'65',r:'8'},{w:'65',r:'8'},{w:'65',r:'7'}],'Flat BB Bench':[{w:'175',r:'10'},{w:'175',r:'9'},{w:'175',r:'8'}],'Seated DB Shoulder Press':[{w:'40',r:'10'},{w:'40',r:'10'},{w:'40',r:'9'}],'Cable Lateral Raises':[{w:'12.5',r:'15'},{w:'12.5',r:'15'},{w:'12.5',r:'13'}],'Cable Tri. Pushdown':[{w:'47.5',r:'12'},{w:'47.5',r:'12'},{w:'47.5',r:'12'}],'Overhead Cable Tri. Ext.':[{w:'47.5',r:'12'},{w:'47.5',r:'12'}] }},
     { date:'4/6',  exercises:{ 'Incline DB Press':[{w:'65',r:'8'},{w:'65',r:'8'},{w:'65',r:'8'},{w:'65',r:'8'}],'Flat BB Bench':[{w:'175',r:'10'},{w:'175',r:'10'},{w:'175',r:'9'}],'Seated DB Shoulder Press':[{w:'35',r:'10'},{w:'35',r:'10'},{w:'35',r:'10'}],'Cable Lateral Raises':[{w:'20',r:'15'},{w:'20',r:'14'},{w:'20',r:'13'}],'Cable Tri. Pushdown':[{w:'60',r:'12'},{w:'70',r:'12'},{w:'70',r:'12'}],'Overhead Cable Tri. Ext.':[{w:'70',r:'15'},{w:'80',r:'15'}] }},
     { date:'4/13', exercises:{ 'Incline DB Press':[{w:'70',r:'6'},{w:'70',r:'6'},{w:'70',r:'6'},{w:'70',r:'6'}],'Flat BB Bench':[{w:'175',r:'10'},{w:'175',r:'8'},{w:'175',r:'8'}],'Seated DB Shoulder Press':[{w:'35',r:'10'},{w:'35',r:'10'},{w:'35',r:'10'}],'Cable Lateral Raises':[{w:'12.5',r:'15'},{w:'12.5',r:'15'},{w:'12.5',r:'15'}],'Cable Tri. Pushdown':[{w:'47.5',r:'12'},{w:'47.5',r:'12'},{w:'47.5',r:'12'}],'Overhead Cable Tri. Ext.':[{w:'47.5',r:'12'},{w:'47.5',r:'12'}] }},
+    { date:'4/20', exercises:{ 'Incline DB Press':[{w:'70',r:'8'},{w:'70',r:'7'},{w:'70',r:'6'},{w:'70',r:'6'}],'Flat BB Bench':[{w:'175',r:'10'},{w:'175',r:'10'},{w:'175',r:'10'}],'Seated DB Shoulder Press':[{w:'40',r:'10'},{w:'40',r:'10'},{w:'40',r:'10'}],'Cable Lateral Raises':[{w:'25',r:'15'},{w:'25',r:'15'},{w:'25',r:'15'}],'Cable Tri. Pushdown':[{w:'52.5',r:'12'},{w:'52.5',r:'11'},{w:'52.5',r:'10'}],'Overhead Cable Tri. Ext.':[{w:'52.5',r:'12'},{w:'52.5',r:'12'}],'Hanging Leg Raises':[{w:'BW',r:'10'},{w:'BW',r:'10'},{w:'BW',r:'10'}] }},
   ],
   'Pull A': [
     { date:'3/10', exercises:{ 'Pull-Ups':[{w:'BW',r:'8'},{w:'BW',r:'8'},{w:'BW',r:'7'},{w:'BW',r:'6'}],'Chest Supported DB Row':[{w:'60',r:'10'},{w:'60',r:'9'},{w:'60',r:'8'}],'Lat Pulldown':[{w:'—',r:'—'}],'Cable Rear Delt Fly':[{w:'15',r:'15'},{w:'20',r:'14'},{w:'20',r:'12'}],'EZ Bar Curl':[{w:'60',r:'12'},{w:'60',r:'11'},{w:'60',r:'10'}],'Hammer Curl':[{w:'30',r:'12'},{w:'30',r:'12'}] }},
@@ -59,6 +61,7 @@ const SEED_HISTORY = {
     { date:'3/31', exercises:{ 'Pull-Ups':[{w:'BW',r:'8'},{w:'BW',r:'8'},{w:'BW',r:'8'},{w:'BW',r:'8'}],'Chest Supported DB Row':[{w:'60',r:'10'},{w:'60',r:'10'},{w:'60',r:'10'}],'Lat Pulldown':[{w:'146',r:'12'},{w:'146',r:'12'},{w:'146',r:'12'}],'Cable Rear Delt Fly':[{w:'20',r:'15'},{w:'20',r:'15'},{w:'20',r:'15'}],'EZ Bar Curl':[{w:'60',r:'12'},{w:'60',r:'12'},{w:'60',r:'12'}],'Hammer Curl':[{w:'30',r:'12'},{w:'30',r:'12'}] }},
     { date:'4/7',  exercises:{ 'Pull-Ups':[{w:'+10',r:'7'},{w:'+10',r:'7'},{w:'+10',r:'7'},{w:'+10',r:'7'}],'Chest Supported DB Row':[{w:'65',r:'10'},{w:'65',r:'9'},{w:'65',r:'8'}],'Lat Pulldown':[{w:'150',r:'12'},{w:'150',r:'11'},{w:'150',r:'10'}],'Cable Rear Delt Fly':[{w:'20',r:'15'},{w:'20',r:'15'},{w:'20',r:'15'}],'EZ Bar Curl':[{w:'60',r:'12'},{w:'60',r:'12'},{w:'60',r:'12'}],'Hammer Curl':[{w:'30',r:'12'},{w:'30',r:'12'}] }},
     { date:'4/14', exercises:{ 'Pull-Ups':[{w:'+10',r:'8'},{w:'+10',r:'8'},{w:'+10',r:'8'},{w:'+10',r:'7'}],'Chest Supported DB Row':[{w:'65',r:'10'},{w:'65',r:'10'},{w:'65',r:'9'}],'Lat Pulldown':[{w:'146',r:'12'},{w:'146',r:'12'},{w:'146',r:'12'}],'Cable Rear Delt Fly':[{w:'20',r:'15'},{w:'20',r:'15'},{w:'20',r:'15'}],'EZ Bar Curl':[{w:'70',r:'10'},{w:'70',r:'10'},{w:'70',r:'10'}],'Hammer Curl':[{w:'30',r:'12'},{w:'30',r:'12'}] }},
+    { date:'4/21', exercises:{ 'Pull-Ups':[{w:'+25',r:'8'},{w:'+25',r:'8'},{w:'+25',r:'7'},{w:'+25',r:'6'}],'Chest Supported DB Row':[{w:'65',r:'10'},{w:'65',r:'10'},{w:'65',r:'10'}],'Lat Pulldown':[{w:'156',r:'12'},{w:'156',r:'12'},{w:'156',r:'11'}],'Cable Rear Delt Fly':[{w:'20',r:'15'},{w:'20',r:'15'},{w:'20',r:'15'}],'EZ Bar Curl':[{w:'70',r:'12'},{w:'70',r:'12'},{w:'70',r:'11'}],'Hammer Curl':[{w:'30',r:'12'},{w:'30',r:'12'}] }},
   ],
   'Legs': [
     { date:'3/12', exercises:{ 'BB Back Squat':[{w:'205',r:'8'},{w:'205',r:'7'},{w:'205',r:'6'},{w:'205',r:'6'}],'BB RDL':[{w:'185',r:'10'},{w:'185',r:'9'},{w:'185',r:'8'}],'Walking DB Lunges':[{w:'40',r:'10'},{w:'40',r:'10'},{w:'40',r:'10'}],'Seated Hamstring Curl':[{w:'161',r:'12'},{w:'161',r:'11'},{w:'161',r:'10'}],'Leg Extension':[{w:'152',r:'15'},{w:'152',r:'14'},{w:'152',r:'13'}],'Seated Calf Raises':[{w:'300',r:'15'},{w:'300',r:'14'},{w:'300',r:'13'},{w:'300',r:'13'}] }},
@@ -83,7 +86,7 @@ const SEED_HISTORY = {
 
 const SEED_BW = [{ date:'3/9', bw:200, cals:'', protein:'' }, { date:'4/17', bw:203.8, cals:'', protein:'' }];
 
-// ── STORAGE ───────────────────────────────────────────────────────────────────
+// ── STORAGE — using wp3 key so existing data is preserved ─────────────────────
 const LS = {
   get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -98,35 +101,42 @@ let phases    = LS.get('wp3_phases', [{ name: 'Phase 1', start: '3/9', end: null
 let activeTab = 'log';
 let selDay    = null;
 let editMode  = false;
+let draft     = {};
+let historyCollapsed = {};
 
-// Draft state — persists inputs while switching tabs
-let draft = {}; // { dayName: { exercises: { exName: [{w,r}] }, note: '', sessionNote: '' } }
+// Timer
+let timerInt = null, timerSecs = 0, timerTotal = 0;
 
-// Timer state
-let timerInt   = null;
-let timerSecs  = 0;
-let timerTotal = 0;
-
-// Init program & seed history
+// Init
 if (!program) {
   program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
-  Object.keys(SEED_HISTORY).forEach(k => { if (!workouts[k]) workouts[k] = SEED_HISTORY[k]; });
   LS.set('wp3_program', program);
-  LS.set('wp3_workouts', workouts);
 }
+// Merge seed history without overwriting existing saved sessions
+Object.keys(SEED_HISTORY).forEach(k => {
+  if (!workouts[k] || workouts[k].length === 0) {
+    workouts[k] = SEED_HISTORY[k];
+  } else {
+    // Add any seed dates not already in saved workouts
+    const existingDates = new Set(workouts[k].map(s => s.date));
+    SEED_HISTORY[k].forEach(sess => {
+      if (!existingDates.has(sess.date)) workouts[k].push(sess);
+    });
+    // Sort by date
+    workouts[k].sort((a, b) => {
+      const [am, ad] = a.date.split('/').map(Number);
+      const [bm, bd] = b.date.split('/').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    });
+  }
+});
+LS.set('wp3_workouts', workouts);
 
 const DAY_ORDER = Object.keys(program);
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function today() { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}`; }
-
-function saveAll() {
-  LS.set('wp3_program', program);
-  LS.set('wp3_workouts', workouts);
-  LS.set('wp3_bw', bwLog);
-  LS.set('wp3_zone2', zone2Log);
-  LS.set('wp3_phases', phases);
-}
+function saveAll() { LS.set('wp3_program', program); LS.set('wp3_workouts', workouts); LS.set('wp3_bw', bwLog); LS.set('wp3_zone2', zone2Log); LS.set('wp3_phases', phases); }
 
 function getLastSession(dayName) {
   const all = workouts[dayName] || [];
@@ -169,7 +179,7 @@ function svgIcon(name) {
   return icons[name] || '';
 }
 
-// ── DRAFT MANAGEMENT ──────────────────────────────────────────────────────────
+// ── DRAFT ─────────────────────────────────────────────────────────────────────
 function captureDraft() {
   if (!selDay || !program[selDay] || program[selDay].type !== 'lift') return;
   const prog = program[selDay];
@@ -202,8 +212,8 @@ function applyDraft(dayName) {
       if (wEl && s.w) { wEl.value = s.w; wEl.classList.toggle('has-value', !!s.w); }
       if (rEl && s.r) { rEl.value = s.r; rEl.classList.toggle('has-value', !!s.r); }
     });
-    const noteVal = d.exercises[ex.name + '_note'];
     const noteEl = document.getElementById(`note_${ei}`);
+    const noteVal = d.exercises[ex.name + '_note'];
     if (noteEl && noteVal) noteEl.value = noteVal;
   });
   const snEl = document.getElementById('sessionNote');
@@ -214,23 +224,18 @@ function applyDraft(dayName) {
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.15, 0.3].forEach(offset => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    [0, 0.18, 0.36].forEach(offset => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      osc.type = 'sine';
+      osc.frequency.value = 880; osc.type = 'sine';
       gain.gain.setValueAtTime(0.4, ctx.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.12);
-      osc.start(ctx.currentTime + offset);
-      osc.stop(ctx.currentTime + offset + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.14);
+      osc.start(ctx.currentTime + offset); osc.stop(ctx.currentTime + offset + 0.16);
     });
   } catch(e) {}
 }
 
-function vibrate() {
-  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e) {}
-}
+function vibrate() { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e) {} }
 
 function startTimer(secs) {
   clearInterval(timerInt);
@@ -243,8 +248,7 @@ function startTimer(secs) {
     updateTimerUI(circ);
     if (timerSecs <= 0) {
       clearInterval(timerInt);
-      playBeep();
-      vibrate();
+      playBeep(); vibrate();
       document.getElementById('timerTime').textContent = 'Done!';
       document.getElementById('timerProg').style.strokeDashoffset = circ;
     }
@@ -252,18 +256,13 @@ function startTimer(secs) {
 }
 
 function updateTimerUI(circ) {
-  const frac = timerSecs / timerTotal;
-  const m = Math.floor(timerSecs / 60);
-  const s = String(timerSecs % 60).padStart(2, '0');
+  const m = Math.floor(timerSecs / 60), s = String(timerSecs % 60).padStart(2, '0');
   document.getElementById('timerTime').textContent = `${m}:${s}`;
-  document.getElementById('timerProg').style.strokeDashoffset = circ * (1 - frac);
+  document.getElementById('timerProg').style.strokeDashoffset = circ * (1 - timerSecs / timerTotal);
   document.getElementById('timerProg').style.strokeDasharray = circ;
 }
 
-function closeTimer() {
-  clearInterval(timerInt);
-  document.getElementById('timerOverlay').style.display = 'none';
-}
+function closeTimer() { clearInterval(timerInt); document.getElementById('timerOverlay').style.display = 'none'; }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function setHeader(title, sub) {
@@ -276,20 +275,18 @@ function showModal(html) {
   document.getElementById('modalOverlay').style.display = 'flex';
 }
 
-function closeModal() {
-  document.getElementById('modalOverlay').style.display = 'none';
-}
+function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
 function showTimerPicker() {
   showModal(`
     <h2>Rest timer</h2>
     <div class="timer-grid">
       ${[60,90,120,150,180,240,300,360].map(s => {
-        const m = Math.floor(s/60), sec = s%60;
+        const m = Math.floor(s/60), sec = s % 60;
         return `<button class="timer-opt" onclick="closeModal();startTimer(${s})">${m}:${String(sec).padStart(2,'0')}</button>`;
       }).join('')}
     </div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-align:center;">Or enter custom seconds:</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-align:center;">Custom (enter seconds):</div>
     <div class="timer-custom">
       <input type="number" id="customTimerSecs" placeholder="e.g. 105" inputmode="numeric" />
       <button class="btn btn-secondary btn-sm" onclick="startCustomTimer()" style="white-space:nowrap;">Start</button>
@@ -301,8 +298,66 @@ function showTimerPicker() {
 function startCustomTimer() {
   const val = parseInt(document.getElementById('customTimerSecs')?.value);
   if (!val || val <= 0) { toast('Enter seconds'); return; }
-  closeModal();
-  startTimer(val);
+  closeModal(); startTimer(val);
+}
+
+// ── WORKOUT SUMMARY ───────────────────────────────────────────────────────────
+function showWorkoutSummary(dayName, newEntry, prevEntry) {
+  const prog = program[dayName];
+  const rows = prog.exercises.map(ex => {
+    const newSets = (newEntry.exercises[ex.name] || []).filter(s => s.w && s.r);
+    if (!newSets.length) return '';
+    const prevSets = prevEntry ? (prevEntry.exercises[ex.name] || []).filter(s => s.w) : [];
+    const newW = parseFloat(newSets[0].w);
+    const prevW = prevSets.length ? parseFloat(prevSets[0].w) : null;
+    const newReps = newSets.map(s => parseInt(s.r) || 0);
+    const avgReps = Math.round(newReps.reduce((a,b) => a+b, 0) / newReps.length);
+    const isNumeric = !isNaN(newW);
+
+    let deltaHTML = '', feedbackText = '';
+    if (!prevEntry) {
+      deltaHTML = `<div class="summary-delta new">First log</div>`;
+      feedbackText = 'Baseline set.';
+    } else if (!isNumeric || isNaN(prevW)) {
+      deltaHTML = `<div class="summary-delta hold">${newSets[0].w}</div>`;
+      feedbackText = `${newSets.length} sets logged.`;
+    } else {
+      const diff = newW - prevW;
+      if (diff > 0) {
+        deltaHTML = `<div class="summary-delta up">+${diff} lbs ↑</div>`;
+        feedbackText = `Good progression. ${avgReps} avg reps.`;
+      } else if (diff < 0) {
+        deltaHTML = `<div class="summary-delta hold">${diff} lbs</div>`;
+        feedbackText = `Dropped ${Math.abs(diff)} lbs — note if intentional.`;
+      } else {
+        // Same weight — check if reps improved vs prev
+        const prevReps = prevSets.map(s => parseInt(s.r) || 0);
+        const prevAvg = prevReps.length ? Math.round(prevReps.reduce((a,b)=>a+b,0)/prevReps.length) : 0;
+        if (avgReps > prevAvg) {
+          deltaHTML = `<div class="summary-delta up">+${avgReps - prevAvg} reps ↑</div>`;
+          feedbackText = `Same weight, more reps — ready to increase next time.`;
+        } else {
+          deltaHTML = `<div class="summary-delta hold">Same</div>`;
+          feedbackText = `Hold weight, focus on rep quality.`;
+        }
+      }
+    }
+    return `<div class="summary-ex">
+      <div>
+        <div class="summary-ex-name">${ex.name}</div>
+        <div class="summary-ex-detail">${newSets.map(s=>`${s.w}×${s.r}`).join(', ')}</div>
+        <div class="summary-feedback">${feedbackText}</div>
+      </div>
+      ${deltaHTML}
+    </div>`;
+  }).filter(Boolean).join('');
+
+  showModal(`
+    <h2>${dayName} — ${newEntry.date}</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">${prevEntry ? `vs ${prevEntry.date}` : 'First session logged'}</div>
+    ${rows || '<div class="empty">No data to summarize.</div>'}
+    <button class="btn btn-primary" onclick="closeModal()">Done</button>
+  `);
 }
 
 // ── LOG TAB ───────────────────────────────────────────────────────────────────
@@ -354,20 +409,15 @@ function renderLog() {
   }
 
   document.getElementById('sec-log').innerHTML = `<div class="day-grid">${dayGrid}</div>${workoutHTML}`;
-  if (selDay && program[selDay]?.type === 'lift') {
-    applyDraft(selDay);
-  }
+  if (selDay && program[selDay]?.type === 'lift') applyDraft(selDay);
 }
 
 function renderExBlock(ex, ei) {
   const sug = selDay ? suggest(selDay, ex.name) : null;
-  const badge = sug ? (sug.action === 'up'
-    ? `<span class="badge badge-up">+wt</span>`
-    : `<span class="badge badge-hold">hold</span>`) : '';
+  const badge = sug ? (sug.action === 'up' ? `<span class="badge badge-up">+wt</span>` : `<span class="badge badge-hold">hold</span>`) : '';
   const typeTag = `<span class="tag ${ex.type}">${ex.type}</span>`;
   const deleteBtn = editMode ? `<button class="icon-btn danger" onclick="removeExercise(${ei})">${svgIcon('trash')}</button>` : '';
   const timerBtn = !editMode ? `<button class="icon-btn" onclick="showTimerPicker()" title="Rest timer">${svgIcon('timer')}</button>` : '';
-
   const sets = Array.from({length: ex.sets}, (_, si) => `
     <div class="set-col">
       <div class="set-num">S${si+1}</div>
@@ -376,7 +426,6 @@ function renderExBlock(ex, ei) {
         <div><input type="number" inputmode="numeric" id="r_${ei}_${si}" placeholder="reps" oninput="this.classList.toggle('has-value',!!this.value)" /><div class="set-lbl">reps</div></div>
       </div>
     </div>`).join('');
-
   return `<div class="exercise-block">
     <div class="ex-header">
       <div><div class="ex-name">${ex.name}${badge}</div><div style="margin-top:4px;">${typeTag}</div></div>
@@ -388,18 +437,12 @@ function renderExBlock(ex, ei) {
 }
 
 function selectDay(name) {
-  captureDraft();
-  selDay = name;
-  editMode = false;
+  captureDraft(); selDay = name; editMode = false;
   renderLog();
   setTimeout(() => document.querySelector('.card')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
 }
 
-function toggleEditMode() {
-  captureDraft();
-  editMode = !editMode;
-  renderLog();
-}
+function toggleEditMode() { captureDraft(); editMode = !editMode; renderLog(); }
 
 function addExercise() {
   const name = document.getElementById('newExName')?.value?.trim();
@@ -415,7 +458,7 @@ function removeExercise(ei) {
   const ex = program[selDay].exercises[ei];
   if (!confirm(`Remove "${ex.name}"?`)) return;
   program[selDay].exercises.splice(ei, 1);
-  if (draft[selDay]) { delete draft[selDay].exercises[ex.name]; }
+  if (draft[selDay]) delete draft[selDay].exercises[ex.name];
   saveAll(); renderLog();
 }
 
@@ -426,7 +469,7 @@ function saveWorkout() {
   const d = draft[selDay] || {};
   const entry = { date: today(), exercises: {}, note: d.sessionNote || '' };
   let hasData = false;
-  prog.exercises.forEach((ex) => {
+  prog.exercises.forEach(ex => {
     const sets = (d.exercises[ex.name] || []).filter(s => s.w || s.r);
     if (sets.length) hasData = true;
     entry.exercises[ex.name] = sets;
@@ -434,10 +477,13 @@ function saveWorkout() {
     if (note) entry.exercises[ex.name + '_note'] = note;
   });
   if (!hasData) { toast('Nothing to save'); return; }
+  const prevEntry = getLastSession(selDay);
   if (!workouts[selDay]) workouts[selDay] = [];
   workouts[selDay].push(entry);
   delete draft[selDay];
-  saveAll(); toast('Workout saved!'); renderLog();
+  saveAll();
+  renderLog();
+  showWorkoutSummary(selDay, entry, prevEntry);
 }
 
 // ── ZONE 2 ────────────────────────────────────────────────────────────────────
@@ -454,8 +500,7 @@ function renderZone2Form() {
       <textarea class="ex-note zone2-full" id="z2notes" rows="2" placeholder="Notes..."></textarea>
     </div>
     <button class="btn btn-primary" onclick="saveZone2()">Save session</button>
-  </div>
-  ${renderZone2History()}`;
+  </div>${renderZone2History()}`;
 }
 
 function renderZone2History() {
@@ -463,28 +508,15 @@ function renderZone2History() {
   const rows = [...zone2Log].reverse().slice(0,10).map(s => `
     <div class="zone2-session">
       <div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
-      <div class="zone2-detail">
-        ${[s.duration?s.duration+' min':'', s.speed?'Speed: '+s.speed:'', s.incline?'Incline: '+s.incline:'', s.hr?s.hr+' bpm':'', s.cals?s.cals+' cal':''].filter(Boolean).join(' · ')}
-        ${s.notes?`<br><span>${s.notes}</span>`:''}
-      </div>
+      <div class="zone2-detail">${[s.duration?s.duration+' min':'',s.speed?'Speed: '+s.speed:'',s.incline?'Incline: '+s.incline:'',s.hr?s.hr+' bpm':'',s.cals?s.cals+' cal':''].filter(Boolean).join(' · ')}${s.notes?`<br><span>${s.notes}</span>`:''}</div>
     </div>`).join('');
   return `<div class="card"><div class="card-title">Recent Zone 2</div>${rows}</div>`;
 }
 
 function saveZone2() {
-  const entry = {
-    date: today(),
-    type: document.getElementById('z2type')?.value,
-    duration: document.getElementById('z2duration')?.value?.trim(),
-    speed: document.getElementById('z2speed')?.value?.trim(),
-    incline: document.getElementById('z2incline')?.value?.trim(),
-    hr: document.getElementById('z2hr')?.value?.trim(),
-    cals: document.getElementById('z2cals')?.value?.trim(),
-    notes: document.getElementById('z2notes')?.value?.trim(),
-  };
+  const entry = { date:today(), type:document.getElementById('z2type')?.value, duration:document.getElementById('z2duration')?.value?.trim(), speed:document.getElementById('z2speed')?.value?.trim(), incline:document.getElementById('z2incline')?.value?.trim(), hr:document.getElementById('z2hr')?.value?.trim(), cals:document.getElementById('z2cals')?.value?.trim(), notes:document.getElementById('z2notes')?.value?.trim() };
   if (!entry.duration && !entry.notes) { toast('Add at least duration'); return; }
-  zone2Log.push(entry);
-  saveAll(); toast('Session saved!'); renderLog();
+  zone2Log.push(entry); saveAll(); toast('Session saved!'); renderLog();
 }
 
 // ── NEXT TAB ──────────────────────────────────────────────────────────────────
@@ -496,7 +528,7 @@ function renderNext() {
   const prog = program[target];
   let html = '';
   if (prog.type === 'cardio') {
-    html = `<div class="card"><p style="color:var(--text2);font-size:14px;">Zone 2 day — keep HR in zone 2 (60–70% max). Log it in the Log tab.</p></div>`;
+    html = `<div class="card"><p style="color:var(--text2);font-size:14px;">Zone 2 day — keep HR 60–70% max. Log in the Log tab.</p></div>`;
   } else {
     const rows = prog.exercises.map(ex => {
       const sug = suggest(target, ex.name);
@@ -519,7 +551,14 @@ function renderHistory() {
   lifts.forEach(name => {
     const sessions = (workouts[name] || []).slice().reverse();
     if (!sessions.length) return;
-    html += `<div class="card"><div class="card-title">${name}</div>`;
+    const isCollapsed = historyCollapsed[name] === true;
+    const count = sessions.length;
+    html += `<div class="card">
+      <div class="history-day-header" onclick="toggleHistoryDay('${name}')">
+        <h3>${name} <span style="font-weight:400;color:var(--text3)">(${count})</span></h3>
+        <span class="history-chevron ${isCollapsed ? '' : 'open'}">▼</span>
+      </div>
+      <div class="history-day-body" id="hbody_${name.replace(/\s/g,'_')}" style="${isCollapsed ? 'display:none' : ''}">`;
     sessions.forEach((sess, revIdx) => {
       const realIdx = (workouts[name].length - 1) - revIdx;
       html += `<div class="history-session">
@@ -530,45 +569,64 @@ function renderHistory() {
       if (sess.note) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${sess.note}</div>`;
       Object.entries(sess.exercises).forEach(([ex, sets]) => {
         if (ex.endsWith('_note') || !Array.isArray(sets) || !sets.length) return;
-        html += `<div class="history-ex-row">
-          <span class="history-ex-name">${ex}</span>
-          <span class="history-ex-sets">${sets.map(s=>`${s.w}×${s.r}`).join(', ')}</span>
-        </div>`;
+        html += `<div class="history-ex-row"><span class="history-ex-name">${ex}</span><span class="history-ex-sets">${sets.map(s=>`${s.w}×${s.r}`).join(', ')}</span></div>`;
       });
       html += `</div>`;
     });
-    html += `</div>`;
+    html += `</div></div>`;
   });
+
   if (zone2Log.length) {
-    html += `<div class="card"><div class="card-title">Zone 2</div>`;
+    const isCollapsed = historyCollapsed['Zone 2'] === true;
+    html += `<div class="card">
+      <div class="history-day-header" onclick="toggleHistoryDay('Zone 2')">
+        <h3>Zone 2 <span style="font-weight:400;color:var(--text3)">(${zone2Log.length})</span></h3>
+        <span class="history-chevron ${isCollapsed ? '' : 'open'}">▼</span>
+      </div>
+      <div class="history-day-body" id="hbody_Zone_2" style="${isCollapsed ? 'display:none' : ''}">`;
     [...zone2Log].reverse().forEach(s => {
-      html += `<div class="zone2-session">
-        <div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
+      html += `<div class="zone2-session"><div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
         <div class="zone2-detail">${[s.duration?s.duration+' min':'',s.speed?'Speed: '+s.speed:'',s.incline?'Incline: '+s.incline:'',s.hr?s.hr+' bpm':''].filter(Boolean).join(' · ')}${s.notes?`<br>${s.notes}`:''}</div>
       </div>`;
     });
-    html += `</div>`;
+    html += `</div></div>`;
   }
+
   document.getElementById('sec-history').innerHTML = html || `<div class="empty">No sessions logged yet.</div>`;
+}
+
+function toggleHistoryDay(name) {
+  historyCollapsed[name] = !historyCollapsed[name];
+  const key = name.replace(/\s/g,'_');
+  const body = document.getElementById(`hbody_${key}`);
+  const chevron = body?.previousElementSibling?.querySelector('.history-chevron');
+  if (body) body.style.display = historyCollapsed[name] ? 'none' : '';
+  if (chevron) chevron.classList.toggle('open', !historyCollapsed[name]);
 }
 
 function showEditSession(dayName, sessionIdx) {
   const sess = workouts[dayName][sessionIdx];
   if (!sess) return;
-  const exEntries = Object.entries(sess.exercises).filter(([k, v]) => !k.endsWith('_note') && Array.isArray(v));
+  const exEntries = Object.entries(sess.exercises).filter(([k,v]) => !k.endsWith('_note') && Array.isArray(v));
   const exForms = exEntries.map(([exName, sets]) => `
     <div style="margin-bottom:14px;">
       <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">${exName}</div>
-      ${sets.map((s, si) => `
-        <div class="edit-set-row">
+      ${sets.map((s, si) => {
+        const key = exName.replace(/[^a-z0-9]/gi,'_');
+        return `<div class="edit-set-row">
           <div class="edit-set-label">S${si+1}</div>
-          <input type="text" inputmode="decimal" id="edit_w_${sessionIdx}_${exName.replace(/\s/g,'_')}_${si}" value="${s.w}" placeholder="lbs" />
-          <input type="number" inputmode="numeric" id="edit_r_${sessionIdx}_${exName.replace(/\s/g,'_')}_${si}" value="${s.r}" placeholder="reps" />
-        </div>`).join('')}
+          <input type="text" inputmode="decimal" id="edit_w_${sessionIdx}_${key}_${si}" value="${s.w}" placeholder="lbs" />
+          <input type="number" inputmode="numeric" id="edit_r_${sessionIdx}_${key}_${si}" value="${s.r}" placeholder="reps" />
+        </div>`;
+      }).join('')}
     </div>`).join('');
 
   showModal(`
     <h2>Edit — ${dayName} ${sess.date}</h2>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Date</div>
+      <input class="modal-input" type="text" id="edit_date_${sessionIdx}" value="${sess.date}" placeholder="e.g. 4/20" />
+    </div>
     ${exForms}
     <input class="modal-input" type="text" id="edit_note_${sessionIdx}" value="${sess.note||''}" placeholder="Session notes..." />
     <button class="btn btn-primary" onclick="saveEditSession('${dayName}',${sessionIdx})">Save changes</button>
@@ -579,10 +637,12 @@ function showEditSession(dayName, sessionIdx) {
 
 function saveEditSession(dayName, sessionIdx) {
   const sess = workouts[dayName][sessionIdx];
-  const exEntries = Object.entries(sess.exercises).filter(([k, v]) => !k.endsWith('_note') && Array.isArray(v));
+  const dateEl = document.getElementById(`edit_date_${sessionIdx}`);
+  if (dateEl && dateEl.value.trim()) sess.date = dateEl.value.trim();
+  const exEntries = Object.entries(sess.exercises).filter(([k,v]) => !k.endsWith('_note') && Array.isArray(v));
   exEntries.forEach(([exName, sets]) => {
+    const key = exName.replace(/[^a-z0-9]/gi,'_');
     sets.forEach((s, si) => {
-      const key = exName.replace(/\s/g,'_');
       const wEl = document.getElementById(`edit_w_${sessionIdx}_${key}_${si}`);
       const rEl = document.getElementById(`edit_r_${sessionIdx}_${key}_${si}`);
       if (wEl) s.w = wEl.value.trim();
@@ -591,6 +651,12 @@ function saveEditSession(dayName, sessionIdx) {
   });
   const noteEl = document.getElementById(`edit_note_${sessionIdx}`);
   if (noteEl) sess.note = noteEl.value.trim();
+  // Re-sort after date change
+  workouts[dayName].sort((a, b) => {
+    const [am, ad] = a.date.split('/').map(Number);
+    const [bm, bd] = b.date.split('/').map(Number);
+    return am !== bm ? am - bm : ad - bd;
+  });
   saveAll(); closeModal(); toast('Session updated!'); renderHistory();
 }
 
@@ -650,9 +716,7 @@ function renderAnalytics() {
         Object.entries(sess.exercises).forEach(([exName, sets]) => {
           if (!Array.isArray(sets)) return;
           Object.entries(muscleMap).forEach(([muscle, list]) => {
-            if (list.some(e => exName.toLowerCase().includes(e.toLowerCase().split(' ')[0]))) {
-              volCounts[muscle] += sets.length;
-            }
+            if (list.some(e => exName.toLowerCase().includes(e.toLowerCase().split(' ')[0]))) volCounts[muscle] += sets.length;
           });
         });
       }
@@ -677,7 +741,6 @@ function renderBW() {
   const first = bwLog[0], last = bwLog[bwLog.length-1];
   const change = first && last ? (last.bw - first.bw).toFixed(1) : null;
   const cls = change > 0 ? 'green' : change < 0 ? 'red' : '';
-
   const pts = bwLog.slice(-12);
   let chartHTML = '';
   if (pts.length > 1) {
@@ -696,7 +759,6 @@ function renderBW() {
       <text x="${xs[xs.length-1]}" y="${H}" font-size="9" fill="var(--text3)" text-anchor="end">${pts[pts.length-1].date}</text>
     </svg></div>`;
   }
-
   const rows = [...bwLog].reverse().map(e => `
     <div class="bw-row-entry">
       <div class="bw-entry-date">${e.date}</div>
@@ -706,7 +768,6 @@ function renderBW() {
         ${e.protein?`<div><div class="bw-entry-val">${e.protein}g</div><div class="bw-entry-sub">protein</div></div>`:''}
       </div>
     </div>`).join('');
-
   document.getElementById('sec-bw').innerHTML = `
     <div class="stats-row">
       <div class="stat-card"><div class="stat-label">Start</div><div class="stat-val">${first?first.bw:'—'}</div></div>
@@ -730,12 +791,7 @@ function renderBW() {
 function logBW() {
   const bwVal = parseFloat(document.getElementById('bw-val').value);
   if (!bwVal) { toast('Enter a weight'); return; }
-  bwLog.push({
-    date: document.getElementById('bw-date').value.trim() || today(),
-    bw: bwVal,
-    cals: document.getElementById('bw-cals').value.trim(),
-    protein: document.getElementById('bw-protein').value.trim(),
-  });
+  bwLog.push({ date: document.getElementById('bw-date').value.trim() || today(), bw: bwVal, cals: document.getElementById('bw-cals').value.trim(), protein: document.getElementById('bw-protein').value.trim() });
   saveAll(); toast('Entry saved!'); renderBW();
 }
 
@@ -767,16 +823,15 @@ function renderSettings() {
     <div class="card">
       <div class="card-title">Archived phases</div>
       ${phases.filter(p=>p.end).length ? phases.filter(p=>p.end).map(p=>`
-        <div class="archive-item">
-          <div><div class="archive-name">${p.name}</div><div class="archive-meta">${p.start} → ${p.end}</div></div>
-        </div>`).join('') : '<div style="font-size:13px;color:var(--text3);">No archived phases yet.</div>'}
+        <div class="archive-item"><div><div class="archive-name">${p.name}</div><div class="archive-meta">${p.start} → ${p.end}</div></div></div>`).join('')
+        : '<div style="font-size:13px;color:var(--text3);">No archived phases yet.</div>'}
     </div>`;
 }
 
 function showNewPhase() {
   showModal(`
     <h2>Start new phase</h2>
-    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;">Archives current history and resets for a new phase. Bodyweight log and program structure are kept.</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;">Archives current history and resets. Bodyweight log and program structure are kept.</p>
     <input class="modal-input" type="text" id="newPhaseName" placeholder="Phase name (e.g. Phase 2)" />
     <button class="btn btn-primary" onclick="startNewPhase()">Archive & start new phase</button>
     <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -801,11 +856,9 @@ function exportCSV() {
       });
     });
   });
-  const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'workout-history.csv';
-  a.click();
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'workout-history.csv'; a.click();
   toast('CSV downloaded');
 }
 

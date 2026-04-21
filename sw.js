@@ -1,4 +1,4 @@
-const CACHE = 'workout-plan-v3';
+const CACHE = 'workout-plan-v4';
 const ASSETS = ['/workout-plan/', '/workout-plan/index.html', '/workout-plan/app.js', '/workout-plan/style.css', '/workout-plan/manifest.json'];
 
 self.addEventListener('install', e => {
