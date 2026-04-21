@@ -90,32 +90,43 @@ const LS = {
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let program    = LS.get('wp2_program', null);
-let workouts   = LS.get('wp2_workouts', {});
-let bwLog      = LS.get('wp2_bw', SEED_BW);
-let zone2Log   = LS.get('wp2_zone2', []);
-let phases     = LS.get('wp2_phases', [{ name: 'Phase 1', start: '3/9', end: null, workouts: {}, zone2: [] }]);
-let activeTab  = 'log';
-let selDay     = null;
-let editMode   = false;
+let program   = LS.get('wp3_program', null);
+let workouts  = LS.get('wp3_workouts', {});
+let bwLog     = LS.get('wp3_bw', SEED_BW);
+let zone2Log  = LS.get('wp3_zone2', []);
+let phases    = LS.get('wp3_phases', [{ name: 'Phase 1', start: '3/9', end: null }]);
+let activeTab = 'log';
+let selDay    = null;
+let editMode  = false;
+
+// Draft state — persists inputs while switching tabs
+let draft = {}; // { dayName: { exercises: { exName: [{w,r}] }, note: '', sessionNote: '' } }
+
+// Timer state
 let timerInt   = null;
 let timerSecs  = 0;
 let timerTotal = 0;
 
-// Init program
+// Init program & seed history
 if (!program) {
   program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
-  // Merge seed history
   Object.keys(SEED_HISTORY).forEach(k => { if (!workouts[k]) workouts[k] = SEED_HISTORY[k]; });
-  LS.set('wp2_program', program);
-  LS.set('wp2_workouts', workouts);
+  LS.set('wp3_program', program);
+  LS.set('wp3_workouts', workouts);
 }
 
 const DAY_ORDER = Object.keys(program);
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function today() { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}`; }
-function saveAll() { LS.set('wp2_program', program); LS.set('wp2_workouts', workouts); LS.set('wp2_bw', bwLog); LS.set('wp2_zone2', zone2Log); LS.set('wp2_phases', phases); }
+
+function saveAll() {
+  LS.set('wp3_program', program);
+  LS.set('wp3_workouts', workouts);
+  LS.set('wp3_bw', bwLog);
+  LS.set('wp3_zone2', zone2Log);
+  LS.set('wp3_phases', phases);
+}
 
 function getLastSession(dayName) {
   const all = workouts[dayName] || [];
@@ -127,7 +138,7 @@ function suggest(dayName, exName) {
   if (!last) return null;
   const sets = last.exercises[exName];
   if (!sets || !sets.length) return null;
-  const ex = program[dayName].exercises.find(e => e.name === exName);
+  const ex = (program[dayName].exercises || []).find(e => e.name === exName);
   const numeric = sets.filter(s => s.w && !['BW','—',''].includes(s.w) && !s.w.startsWith('+'));
   if (!numeric.length) return { w: sets[0].w, action: 'hold' };
   const lastW = parseFloat(numeric[0].w);
@@ -153,34 +164,108 @@ function toast(msg) {
 function svgIcon(name) {
   const icons = {
     trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
-    edit:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
     timer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
   };
   return icons[name] || '';
 }
 
-// ── REST TIMER ────────────────────────────────────────────────────────────────
+// ── DRAFT MANAGEMENT ──────────────────────────────────────────────────────────
+function captureDraft() {
+  if (!selDay || !program[selDay] || program[selDay].type !== 'lift') return;
+  const prog = program[selDay];
+  const d = { exercises: {}, sessionNote: '' };
+  prog.exercises.forEach((ex, ei) => {
+    const sets = [];
+    for (let si = 0; si < ex.sets; si++) {
+      const wEl = document.getElementById(`w_${ei}_${si}`);
+      const rEl = document.getElementById(`r_${ei}_${si}`);
+      sets.push({ w: wEl ? wEl.value : '', r: rEl ? rEl.value : '' });
+    }
+    d.exercises[ex.name] = sets;
+    const noteEl = document.getElementById(`note_${ei}`);
+    if (noteEl) d.exercises[ex.name + '_note'] = noteEl.value;
+  });
+  const snEl = document.getElementById('sessionNote');
+  if (snEl) d.sessionNote = snEl.value;
+  draft[selDay] = d;
+}
+
+function applyDraft(dayName) {
+  const d = draft[dayName];
+  if (!d) return;
+  const prog = program[dayName];
+  prog.exercises.forEach((ex, ei) => {
+    const sets = d.exercises[ex.name] || [];
+    sets.forEach((s, si) => {
+      const wEl = document.getElementById(`w_${ei}_${si}`);
+      const rEl = document.getElementById(`r_${ei}_${si}`);
+      if (wEl && s.w) { wEl.value = s.w; wEl.classList.toggle('has-value', !!s.w); }
+      if (rEl && s.r) { rEl.value = s.r; rEl.classList.toggle('has-value', !!s.r); }
+    });
+    const noteVal = d.exercises[ex.name + '_note'];
+    const noteEl = document.getElementById(`note_${ei}`);
+    if (noteEl && noteVal) noteEl.value = noteVal;
+  });
+  const snEl = document.getElementById('sessionNote');
+  if (snEl && d.sessionNote) snEl.value = d.sessionNote;
+}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.15, 0.3].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.12);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.15);
+    });
+  } catch(e) {}
+}
+
+function vibrate() {
+  try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e) {}
+}
+
 function startTimer(secs) {
   clearInterval(timerInt);
   timerTotal = secs; timerSecs = secs;
-  const circ = 2 * Math.PI * 80;
+  const circ = 2 * Math.PI * 88;
   document.getElementById('timerOverlay').style.display = 'flex';
   updateTimerUI(circ);
   timerInt = setInterval(() => {
     timerSecs--;
     updateTimerUI(circ);
-    if (timerSecs <= 0) { clearInterval(timerInt); setTimeout(closeTimer, 600); }
+    if (timerSecs <= 0) {
+      clearInterval(timerInt);
+      playBeep();
+      vibrate();
+      document.getElementById('timerTime').textContent = 'Done!';
+      document.getElementById('timerProg').style.strokeDashoffset = circ;
+    }
   }, 1000);
 }
+
 function updateTimerUI(circ) {
   const frac = timerSecs / timerTotal;
-  document.getElementById('timerTime').textContent = `${Math.floor(timerSecs/60)}:${String(timerSecs%60).padStart(2,'0')}`;
+  const m = Math.floor(timerSecs / 60);
+  const s = String(timerSecs % 60).padStart(2, '0');
+  document.getElementById('timerTime').textContent = `${m}:${s}`;
   document.getElementById('timerProg').style.strokeDashoffset = circ * (1 - frac);
   document.getElementById('timerProg').style.strokeDasharray = circ;
 }
-function closeTimer() { clearInterval(timerInt); document.getElementById('timerOverlay').style.display = 'none'; }
 
-// ── RENDER HELPERS ────────────────────────────────────────────────────────────
+function closeTimer() {
+  clearInterval(timerInt);
+  document.getElementById('timerOverlay').style.display = 'none';
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────────
 function setHeader(title, sub) {
   document.querySelector('#appHeader h1').textContent = title;
   document.querySelector('#appHeader p').textContent = sub || '';
@@ -190,7 +275,35 @@ function showModal(html) {
   document.getElementById('modalOverlay').innerHTML = `<div class="modal">${html}</div>`;
   document.getElementById('modalOverlay').style.display = 'flex';
 }
-function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+
+function showTimerPicker() {
+  showModal(`
+    <h2>Rest timer</h2>
+    <div class="timer-grid">
+      ${[60,90,120,150,180,240,300,360].map(s => {
+        const m = Math.floor(s/60), sec = s%60;
+        return `<button class="timer-opt" onclick="closeModal();startTimer(${s})">${m}:${String(sec).padStart(2,'0')}</button>`;
+      }).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-align:center;">Or enter custom seconds:</div>
+    <div class="timer-custom">
+      <input type="number" id="customTimerSecs" placeholder="e.g. 105" inputmode="numeric" />
+      <button class="btn btn-secondary btn-sm" onclick="startCustomTimer()" style="white-space:nowrap;">Start</button>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+  `);
+}
+
+function startCustomTimer() {
+  const val = parseInt(document.getElementById('customTimerSecs')?.value);
+  if (!val || val <= 0) { toast('Enter seconds'); return; }
+  closeModal();
+  startTimer(val);
+}
 
 // ── LOG TAB ───────────────────────────────────────────────────────────────────
 function renderLog() {
@@ -200,7 +313,7 @@ function renderLog() {
 
   const dayGrid = DAY_ORDER.map(name => {
     const prog = program[name];
-    const logged = workouts[name] && workouts[name].some(s => s.date === today());
+    const logged = (workouts[name] || []).some(s => s.date === today());
     return `<button class="day-btn ${selDay===name?'active':''}" onclick="selectDay('${name}')">
       <div class="day-short">${prog.day}</div>
       <div class="day-name">${name}</div>
@@ -217,9 +330,7 @@ function renderLog() {
       const exBlocks = prog.exercises.map((ex, ei) => renderExBlock(ex, ei)).join('');
       const addBar = editMode ? `
         <div style="padding:12px 0 0;">
-          <div class="add-ex-bar">
-            <input type="text" id="newExName" placeholder="Exercise name" />
-          </div>
+          <div class="add-ex-bar"><input type="text" id="newExName" placeholder="Exercise name" /></div>
           <div class="add-ex-row">
             <input type="number" id="newExSets" placeholder="Sets" inputmode="numeric" min="1" max="10" />
             <input type="text" id="newExReps" placeholder="Rep range (e.g. 8-10)" />
@@ -231,12 +342,11 @@ function renderLog() {
           </div>
           <button class="btn btn-secondary btn-sm" onclick="addExercise()" style="width:100%">+ Add exercise</button>
         </div>` : '';
-      const sessionNote = `<textarea class="ex-note" id="sessionNote" rows="2" placeholder="Session notes..." style="margin-top:16px;">${''}</textarea>`;
       workoutHTML = `<div class="card">
         <div class="card-title">${selDay}</div>
         ${exBlocks}
         ${addBar}
-        ${sessionNote}
+        <textarea class="ex-note" id="sessionNote" rows="2" placeholder="Session notes..." style="margin-top:16px;"></textarea>
         <button class="btn btn-primary" onclick="saveWorkout()">Save workout</button>
         <button class="btn btn-secondary" onclick="showTimerPicker()">⏱ Rest timer</button>
       </div>`;
@@ -244,6 +354,9 @@ function renderLog() {
   }
 
   document.getElementById('sec-log').innerHTML = `<div class="day-grid">${dayGrid}</div>${workoutHTML}`;
+  if (selDay && program[selDay]?.type === 'lift') {
+    applyDraft(selDay);
+  }
 }
 
 function renderExBlock(ex, ei) {
@@ -252,82 +365,38 @@ function renderExBlock(ex, ei) {
     ? `<span class="badge badge-up">+wt</span>`
     : `<span class="badge badge-hold">hold</span>`) : '';
   const typeTag = `<span class="tag ${ex.type}">${ex.type}</span>`;
-  const deleteBtn = editMode ? `<button class="icon-btn danger" onclick="removeExercise(${ei})" title="Remove">${svgIcon('trash')}</button>` : '';
-  const timerBtn = !editMode ? `<button class="icon-btn" onclick="startTimer(90)" title="90s rest">${svgIcon('timer')}</button>` : '';
+  const deleteBtn = editMode ? `<button class="icon-btn danger" onclick="removeExercise(${ei})">${svgIcon('trash')}</button>` : '';
+  const timerBtn = !editMode ? `<button class="icon-btn" onclick="showTimerPicker()" title="Rest timer">${svgIcon('timer')}</button>` : '';
 
   const sets = Array.from({length: ex.sets}, (_, si) => `
     <div class="set-col">
       <div class="set-num">S${si+1}</div>
       <div class="set-inputs">
-        <div><input type="text" inputmode="decimal" id="w_${ei}_${si}" placeholder="${sug?sug.w:'wt'}" /><div class="set-lbl">lbs</div></div>
-        <div><input type="number" inputmode="numeric" id="r_${ei}_${si}" placeholder="reps" /><div class="set-lbl">reps</div></div>
+        <div><input type="text" inputmode="decimal" id="w_${ei}_${si}" placeholder="${sug?sug.w:'wt'}" oninput="this.classList.toggle('has-value',!!this.value)" /><div class="set-lbl">lbs</div></div>
+        <div><input type="number" inputmode="numeric" id="r_${ei}_${si}" placeholder="reps" oninput="this.classList.toggle('has-value',!!this.value)" /><div class="set-lbl">reps</div></div>
       </div>
     </div>`).join('');
 
-  return `<div class="exercise-block" id="exblock_${ei}">
+  return `<div class="exercise-block">
     <div class="ex-header">
-      <div>
-        <div class="ex-name">${ex.name}${badge}</div>
-        <div style="margin-top:4px;">${typeTag}</div>
-      </div>
-      <div class="ex-actions">
-        <span class="ex-scheme">${ex.sets}×${ex.repRange}</span>
-        ${timerBtn}${deleteBtn}
-      </div>
+      <div><div class="ex-name">${ex.name}${badge}</div><div style="margin-top:4px;">${typeTag}</div></div>
+      <div class="ex-actions"><span class="ex-scheme">${ex.sets}×${ex.repRange}</span>${timerBtn}${deleteBtn}</div>
     </div>
     <div class="sets-row">${sets}</div>
     <textarea class="ex-note" id="note_${ei}" rows="1" placeholder="Notes..."></textarea>
   </div>`;
 }
 
-function renderZone2Form() {
-  return `<div class="card">
-    <div class="card-title">Zone 2 — Log session</div>
-    <div class="zone2-form">
-      <select id="z2type">
-        <option>Treadmill walk</option>
-        <option>Boxing</option>
-        <option>Cycling</option>
-        <option>Rowing</option>
-        <option>Elliptical</option>
-        <option>Other</option>
-      </select>
-      <input type="text" id="z2duration" placeholder="Duration (min)" inputmode="numeric" />
-      <input type="text" id="z2speed" placeholder="Speed / intensity" />
-      <input type="text" id="z2incline" placeholder="Incline / resistance" />
-      <input type="text" id="z2hr" placeholder="Avg HR (bpm)" inputmode="numeric" />
-      <input type="text" id="z2cals" placeholder="Calories burned" inputmode="numeric" />
-      <textarea class="ex-note zone2-full" id="z2notes" rows="2" placeholder="Notes (e.g. rounds, combos, felt great...)"></textarea>
-    </div>
-    <button class="btn btn-primary" onclick="saveZone2()">Save session</button>
-  </div>
-  ${renderZone2History()}`;
-}
-
-function renderZone2History() {
-  if (!zone2Log.length) return '';
-  const rows = [...zone2Log].reverse().slice(0, 10).map(s => `
-    <div class="zone2-session">
-      <div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
-      <div class="zone2-detail">
-        ${s.duration ? `<span>${s.duration} min</span>` : ''}
-        ${s.speed ? ` · Speed: <span>${s.speed}</span>` : ''}
-        ${s.incline ? ` · Incline: <span>${s.incline}</span>` : ''}
-        ${s.hr ? ` · HR: <span>${s.hr} bpm</span>` : ''}
-        ${s.cals ? ` · <span>${s.cals} cal</span>` : ''}
-        ${s.notes ? `<br><span style="color:var(--text2)">${s.notes}</span>` : ''}
-      </div>
-    </div>`).join('');
-  return `<div class="card"><div class="card-title">Recent Zone 2</div>${rows}</div>`;
-}
-
 function selectDay(name) {
-  selDay = name; editMode = false;
+  captureDraft();
+  selDay = name;
+  editMode = false;
   renderLog();
   setTimeout(() => document.querySelector('.card')?.scrollIntoView({ behavior:'smooth', block:'start' }), 60);
 }
 
 function toggleEditMode() {
+  captureDraft();
   editMode = !editMode;
   renderLog();
 }
@@ -346,30 +415,60 @@ function removeExercise(ei) {
   const ex = program[selDay].exercises[ei];
   if (!confirm(`Remove "${ex.name}"?`)) return;
   program[selDay].exercises.splice(ei, 1);
+  if (draft[selDay]) { delete draft[selDay].exercises[ex.name]; }
   saveAll(); renderLog();
 }
 
 function saveWorkout() {
   if (!selDay || program[selDay].type === 'cardio') return;
+  captureDraft();
   const prog = program[selDay];
-  const entry = { date: today(), exercises: {}, note: '' };
+  const d = draft[selDay] || {};
+  const entry = { date: today(), exercises: {}, note: d.sessionNote || '' };
   let hasData = false;
-  prog.exercises.forEach((ex, ei) => {
-    const sets = [];
-    for (let si = 0; si < ex.sets; si++) {
-      const w = document.getElementById(`w_${ei}_${si}`)?.value?.trim();
-      const r = document.getElementById(`r_${ei}_${si}`)?.value?.trim();
-      if (w || r) { sets.push({ w: w||'', r: r||'' }); hasData = true; }
-    }
-    const note = document.getElementById(`note_${ei}`)?.value?.trim();
+  prog.exercises.forEach((ex) => {
+    const sets = (d.exercises[ex.name] || []).filter(s => s.w || s.r);
+    if (sets.length) hasData = true;
     entry.exercises[ex.name] = sets;
+    const note = d.exercises[ex.name + '_note'];
     if (note) entry.exercises[ex.name + '_note'] = note;
   });
-  entry.note = document.getElementById('sessionNote')?.value?.trim() || '';
   if (!hasData) { toast('Nothing to save'); return; }
   if (!workouts[selDay]) workouts[selDay] = [];
   workouts[selDay].push(entry);
+  delete draft[selDay];
   saveAll(); toast('Workout saved!'); renderLog();
+}
+
+// ── ZONE 2 ────────────────────────────────────────────────────────────────────
+function renderZone2Form() {
+  return `<div class="card">
+    <div class="card-title">Zone 2 — Log session</div>
+    <div class="zone2-form">
+      <select id="z2type"><option>Treadmill walk</option><option>Boxing</option><option>Cycling</option><option>Rowing</option><option>Elliptical</option><option>Other</option></select>
+      <input type="text" id="z2duration" placeholder="Duration (min)" inputmode="numeric" />
+      <input type="text" id="z2speed" placeholder="Speed / intensity" />
+      <input type="text" id="z2incline" placeholder="Incline / resistance" />
+      <input type="text" id="z2hr" placeholder="Avg HR (bpm)" inputmode="numeric" />
+      <input type="text" id="z2cals" placeholder="Calories burned" inputmode="numeric" />
+      <textarea class="ex-note zone2-full" id="z2notes" rows="2" placeholder="Notes..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="saveZone2()">Save session</button>
+  </div>
+  ${renderZone2History()}`;
+}
+
+function renderZone2History() {
+  if (!zone2Log.length) return '';
+  const rows = [...zone2Log].reverse().slice(0,10).map(s => `
+    <div class="zone2-session">
+      <div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
+      <div class="zone2-detail">
+        ${[s.duration?s.duration+' min':'', s.speed?'Speed: '+s.speed:'', s.incline?'Incline: '+s.incline:'', s.hr?s.hr+' bpm':'', s.cals?s.cals+' cal':''].filter(Boolean).join(' · ')}
+        ${s.notes?`<br><span>${s.notes}</span>`:''}
+      </div>
+    </div>`).join('');
+  return `<div class="card"><div class="card-title">Recent Zone 2</div>${rows}</div>`;
 }
 
 function saveZone2() {
@@ -388,17 +487,6 @@ function saveZone2() {
   saveAll(); toast('Session saved!'); renderLog();
 }
 
-function showTimerPicker() {
-  showModal(`
-    <h2>Rest timer</h2>
-    <p style="color:var(--text2);font-size:14px;margin-bottom:16px;">Select rest duration</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      ${[60,90,120,150,180,240].map(s => `<button class="btn btn-secondary" onclick="closeModal();startTimer(${s})">${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}</button>`).join('')}
-    </div>
-    <button class="btn btn-secondary" onclick="closeModal()" style="margin-top:8px;">Cancel</button>
-  `);
-}
-
 // ── NEXT TAB ──────────────────────────────────────────────────────────────────
 function renderNext() {
   const dow = new Date().getDay();
@@ -413,15 +501,12 @@ function renderNext() {
     const rows = prog.exercises.map(ex => {
       const sug = suggest(target, ex.name);
       return `<div class="next-ex-row">
-        <div>
-          <div class="next-ex-name">${ex.name}</div>
-          <div class="next-ex-scheme">${ex.sets} × ${ex.repRange}</div>
-        </div>
+        <div><div class="next-ex-name">${ex.name}</div><div class="next-ex-scheme">${ex.sets} × ${ex.repRange}</div></div>
         <div class="next-target">${sug ? sug.w + (sug.action==='up' ? ' ↑' : '') : '—'}</div>
       </div>`;
     }).join('');
     html = `<div class="card"><div class="card-title">${target}</div>${rows}</div>
-      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:4px;">↑ = increase weight. Based on last session.</p>`;
+      <p style="font-size:12px;color:var(--text3);text-align:center;margin-top:4px;">↑ = increase weight this session.</p>`;
   }
   document.getElementById('sec-next').innerHTML = html;
 }
@@ -435,22 +520,30 @@ function renderHistory() {
     const sessions = (workouts[name] || []).slice().reverse();
     if (!sessions.length) return;
     html += `<div class="card"><div class="card-title">${name}</div>`;
-    sessions.forEach(sess => {
-      html += `<div class="history-session"><div class="history-date">${sess.date}</div>`;
+    sessions.forEach((sess, revIdx) => {
+      const realIdx = (workouts[name].length - 1) - revIdx;
+      html += `<div class="history-session">
+        <div class="history-date">
+          <span>${sess.date}</span>
+          <button class="history-edit-btn" onclick="showEditSession('${name}',${realIdx})">Edit</button>
+        </div>`;
       if (sess.note) html += `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${sess.note}</div>`;
       Object.entries(sess.exercises).forEach(([ex, sets]) => {
         if (ex.endsWith('_note') || !Array.isArray(sets) || !sets.length) return;
-        html += `<div class="history-ex-row"><span class="history-ex-name">${ex}</span><span class="history-ex-sets">${sets.map(s=>`${s.w}×${s.r}`).join(', ')}</span></div>`;
+        html += `<div class="history-ex-row">
+          <span class="history-ex-name">${ex}</span>
+          <span class="history-ex-sets">${sets.map(s=>`${s.w}×${s.r}`).join(', ')}</span>
+        </div>`;
       });
       html += `</div>`;
     });
     html += `</div>`;
   });
-  // Zone 2 history
   if (zone2Log.length) {
     html += `<div class="card"><div class="card-title">Zone 2</div>`;
     [...zone2Log].reverse().forEach(s => {
-      html += `<div class="zone2-session"><div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
+      html += `<div class="zone2-session">
+        <div class="zone2-date">${s.date} — <span style="color:var(--text)">${s.type}</span></div>
         <div class="zone2-detail">${[s.duration?s.duration+' min':'',s.speed?'Speed: '+s.speed:'',s.incline?'Incline: '+s.incline:'',s.hr?s.hr+' bpm':''].filter(Boolean).join(' · ')}${s.notes?`<br>${s.notes}`:''}</div>
       </div>`;
     });
@@ -459,11 +552,57 @@ function renderHistory() {
   document.getElementById('sec-history').innerHTML = html || `<div class="empty">No sessions logged yet.</div>`;
 }
 
+function showEditSession(dayName, sessionIdx) {
+  const sess = workouts[dayName][sessionIdx];
+  if (!sess) return;
+  const exEntries = Object.entries(sess.exercises).filter(([k, v]) => !k.endsWith('_note') && Array.isArray(v));
+  const exForms = exEntries.map(([exName, sets]) => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">${exName}</div>
+      ${sets.map((s, si) => `
+        <div class="edit-set-row">
+          <div class="edit-set-label">S${si+1}</div>
+          <input type="text" inputmode="decimal" id="edit_w_${sessionIdx}_${exName.replace(/\s/g,'_')}_${si}" value="${s.w}" placeholder="lbs" />
+          <input type="number" inputmode="numeric" id="edit_r_${sessionIdx}_${exName.replace(/\s/g,'_')}_${si}" value="${s.r}" placeholder="reps" />
+        </div>`).join('')}
+    </div>`).join('');
+
+  showModal(`
+    <h2>Edit — ${dayName} ${sess.date}</h2>
+    ${exForms}
+    <input class="modal-input" type="text" id="edit_note_${sessionIdx}" value="${sess.note||''}" placeholder="Session notes..." />
+    <button class="btn btn-primary" onclick="saveEditSession('${dayName}',${sessionIdx})">Save changes</button>
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-danger" onclick="deleteSession('${dayName}',${sessionIdx})">Delete session</button>
+  `);
+}
+
+function saveEditSession(dayName, sessionIdx) {
+  const sess = workouts[dayName][sessionIdx];
+  const exEntries = Object.entries(sess.exercises).filter(([k, v]) => !k.endsWith('_note') && Array.isArray(v));
+  exEntries.forEach(([exName, sets]) => {
+    sets.forEach((s, si) => {
+      const key = exName.replace(/\s/g,'_');
+      const wEl = document.getElementById(`edit_w_${sessionIdx}_${key}_${si}`);
+      const rEl = document.getElementById(`edit_r_${sessionIdx}_${key}_${si}`);
+      if (wEl) s.w = wEl.value.trim();
+      if (rEl) s.r = rEl.value.trim();
+    });
+  });
+  const noteEl = document.getElementById(`edit_note_${sessionIdx}`);
+  if (noteEl) sess.note = noteEl.value.trim();
+  saveAll(); closeModal(); toast('Session updated!'); renderHistory();
+}
+
+function deleteSession(dayName, sessionIdx) {
+  if (!confirm('Delete this session?')) return;
+  workouts[dayName].splice(sessionIdx, 1);
+  saveAll(); closeModal(); toast('Session deleted'); renderHistory();
+}
+
 // ── ANALYTICS TAB ─────────────────────────────────────────────────────────────
 function renderAnalytics() {
   setHeader('Analytics', 'PRs, volume, 1RM');
-
-  // PRs
   const prLifts = [
     {name:'BB Back Squat',w:'Legs'},{name:'Flat BB Bench',w:'Push B'},
     {name:'Incline DB Press',w:'Push A'},{name:'BB RDL',w:'Legs'},
@@ -484,26 +623,25 @@ function renderAnalytics() {
       <div class="pr-lift">${lift.name}</div>
       <div class="pr-weight">${maxW||'—'}${maxW?' lbs':''}</div>
       <div class="pr-date">${maxDate}</div>
-      ${rm?`<div style="font-size:11px;color:var(--blue);margin-top:4px;">~${rm} lbs 1RM</div>`:''}
+      ${rm?`<div style="font-size:11px;color:var(--blue);margin-top:4px;">~${rm} lbs est. 1RM</div>`:''}
     </div>`;
   }).join('');
 
-  // Volume (weekly sets per muscle group)
   const muscleMap = {
-    'Chest': ['Incline DB Press','Flat BB Bench'],
-    'Shoulders': ['Seated DB Shoulder Press','Shoulder Press','Cable Lateral Raises'],
-    'Triceps': ['Cable Tri. Pushdown','Overhead Cable Tri. Ext.','Skull Crushers','Rope Tri. Pushdown'],
-    'Back': ['Pull-Ups','Chest Supported DB Row','Lat Pulldown','Single-Arm DB Row','Lat. Pulldown','Inverse Row'],
-    'Rear Delts': ['Cable Rear Delt Fly','Face Pulls','DB Rear Delt Fly'],
-    'Biceps': ['EZ Bar Curl','Hammer Curl','Incline DB Curl'],
-    'Quads': ['BB Back Squat','Walking DB Lunges','Leg Extension'],
-    'Hamstrings': ['BB RDL','Seated Hamstring Curl'],
-    'Calves': ['Seated Calf Raises'],
-    'Core': ['Hanging Leg Raises','Ab Rollouts','Cable Crunches','Pallof Press','Weighted Oblique Crunches','Weighted Decline Sit-Ups','Hanging MB Leg Raises'],
+    'Chest':['Incline DB Press','Flat BB Bench'],
+    'Shoulders':['Seated DB Shoulder Press','Shoulder Press','Cable Lateral Raises'],
+    'Triceps':['Cable Tri. Pushdown','Overhead Cable Tri. Ext.','Skull Crushers','Rope Tri. Pushdown'],
+    'Back':['Pull-Ups','Chest Supported DB Row','Lat Pulldown','Single-Arm DB Row','Lat. Pulldown'],
+    'Rear Delts':['Cable Rear Delt Fly','Face Pulls'],
+    'Biceps':['EZ Bar Curl','Hammer Curl','Incline DB Curl'],
+    'Quads':['BB Back Squat','Walking DB Lunges','Leg Extension'],
+    'Hamstrings':['BB RDL','Seated Hamstring Curl'],
+    'Calves':['Seated Calf Raises'],
+    'Core':['Hanging Leg Raises','Ab Rollouts','Cable Crunches','Pallof Press','Weighted Oblique Crunches','Weighted Decline Sit-Ups','Hanging MB Leg Raises'],
   };
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   const volCounts = {};
-  Object.entries(muscleMap).forEach(([m]) => volCounts[m] = 0);
+  Object.keys(muscleMap).forEach(m => volCounts[m] = 0);
   DAY_ORDER.forEach(day => {
     (workouts[day]||[]).forEach(sess => {
       const parts = sess.date.split('/');
@@ -511,8 +649,8 @@ function renderAnalytics() {
       if (d >= weekAgo) {
         Object.entries(sess.exercises).forEach(([exName, sets]) => {
           if (!Array.isArray(sets)) return;
-          Object.entries(muscleMap).forEach(([muscle, exList]) => {
-            if (exList.some(e => exName.toLowerCase().includes(e.toLowerCase().split(' ')[0]))) {
+          Object.entries(muscleMap).forEach(([muscle, list]) => {
+            if (list.some(e => exName.toLowerCase().includes(e.toLowerCase().split(' ')[0]))) {
               volCounts[muscle] += sets.length;
             }
           });
@@ -529,8 +667,8 @@ function renderAnalytics() {
     </div>`).join('');
 
   document.getElementById('sec-analytics').innerHTML = `
-    <div class="card"><div class="card-title">Personal records + estimated 1RM</div><div class="pr-grid">${prCards}</div></div>
-    <div class="card"><div class="card-title">Weekly volume (sets, last 7 days)</div>${volRows}</div>`;
+    <div class="card"><div class="card-title">Personal records + est. 1RM</div><div class="pr-grid">${prCards}</div></div>
+    <div class="card"><div class="card-title">Weekly volume — sets per muscle (last 7 days)</div>${volRows}</div>`;
 }
 
 // ── BODYWEIGHT TAB ────────────────────────────────────────────────────────────
@@ -540,25 +678,22 @@ function renderBW() {
   const change = first && last ? (last.bw - first.bw).toFixed(1) : null;
   const cls = change > 0 ? 'green' : change < 0 ? 'red' : '';
 
-  // Mini chart
   const pts = bwLog.slice(-12);
   let chartHTML = '';
   if (pts.length > 1) {
     const weights = pts.map(p => p.bw);
     const minW = Math.min(...weights), maxW = Math.max(...weights);
     const range = maxW - minW || 1;
-    const W = 300, H = 100, pad = 10;
+    const W = 300, H = 100, pad = 14;
     const xs = pts.map((_, i) => pad + i * (W - pad*2) / (pts.length - 1));
     const ys = pts.map(p => H - pad - (p.bw - minW) / range * (H - pad*2));
     const pathD = xs.map((x, i) => `${i===0?'M':'L'}${x},${ys[i]}`).join(' ');
-    const dotsSVG = xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3" fill="var(--accent)"/>`).join('');
+    const dots = xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3" fill="#fff"/>`).join('');
     chartHTML = `<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-      <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
-      ${dotsSVG}
+      <path d="${pathD}" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
+      ${dots}
       <text x="${xs[0]}" y="${H}" font-size="9" fill="var(--text3)" text-anchor="middle">${pts[0].date}</text>
       <text x="${xs[xs.length-1]}" y="${H}" font-size="9" fill="var(--text3)" text-anchor="end">${pts[pts.length-1].date}</text>
-      <text x="${pad}" y="${ys[weights.indexOf(minW)]}" font-size="9" fill="var(--text3)">${minW}</text>
-      <text x="${pad}" y="${ys[weights.indexOf(maxW)]}" font-size="9" fill="var(--text3)">${maxW}</text>
     </svg></div>`;
   }
 
@@ -582,7 +717,7 @@ function renderBW() {
     <div class="card">
       <div class="card-title">Log entry</div>
       <div class="bw-form">
-        <input type="text" id="bw-date" placeholder="Date (e.g. 4/19)" />
+        <input type="text" id="bw-date" placeholder="Date (e.g. 4/22)" />
         <input type="number" id="bw-val" placeholder="Weight (lbs)" step="0.1" inputmode="decimal" />
         <input type="number" id="bw-cals" placeholder="Calories" inputmode="numeric" />
         <input type="number" id="bw-protein" placeholder="Protein (g)" inputmode="numeric" />
@@ -619,11 +754,9 @@ function renderSettings() {
       <div class="card-title">Edit workout days</div>
       ${DAY_ORDER.map(name => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--text)">${name}</div>
-            <div style="font-size:12px;color:var(--text2)">${program[name].day} · ${program[name].type}</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="selectDay('${name}');showTab('log')">Edit exercises</button>
+          <div><div style="font-size:14px;font-weight:600;color:var(--text)">${name}</div>
+          <div style="font-size:12px;color:var(--text2)">${program[name].day} · ${program[name].type}</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="selectDay('${name}');showTab('log')">Edit</button>
         </div>`).join('')}
     </div>
     <div class="card">
@@ -643,7 +776,7 @@ function renderSettings() {
 function showNewPhase() {
   showModal(`
     <h2>Start new phase</h2>
-    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;">This will archive your current workout history and reset for a new phase. Your bodyweight log and program structure are kept.</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:16px;">Archives current history and resets for a new phase. Bodyweight log and program structure are kept.</p>
     <input class="modal-input" type="text" id="newPhaseName" placeholder="Phase name (e.g. Phase 2)" />
     <button class="btn btn-primary" onclick="startNewPhase()">Archive & start new phase</button>
     <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -652,13 +785,9 @@ function showNewPhase() {
 
 function startNewPhase() {
   const name = document.getElementById('newPhaseName')?.value?.trim() || 'New Phase';
-  // Archive current
   if (phases.length) phases[phases.length-1].end = today();
-  phases[phases.length-1].workouts = JSON.parse(JSON.stringify(workouts));
-  phases[phases.length-1].zone2 = JSON.parse(JSON.stringify(zone2Log));
-  // Start fresh
   workouts = {}; zone2Log = [];
-  phases.push({ name, start: today(), end: null, workouts: {}, zone2: [] });
+  phases.push({ name, start: today(), end: null });
   saveAll(); closeModal(); toast(`${name} started!`); renderSettings();
 }
 
@@ -673,14 +802,16 @@ function exportCSV() {
     });
   });
   const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='workout-history.csv'; a.click();
-  URL.revokeObjectURL(url);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'workout-history.csv';
+  a.click();
   toast('CSV downloaded');
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function showTab(tab) {
+  if (activeTab === 'log') captureDraft();
   activeTab = tab;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));

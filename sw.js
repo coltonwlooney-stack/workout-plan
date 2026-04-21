@@ -1,4 +1,4 @@
-const CACHE = 'workout-plan-v2';
+const CACHE = 'workout-plan-v3';
 const ASSETS = ['/workout-plan/', '/workout-plan/index.html', '/workout-plan/app.js', '/workout-plan/style.css', '/workout-plan/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -15,6 +15,6 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/index.html')))
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/workout-plan/index.html')))
   );
 });
