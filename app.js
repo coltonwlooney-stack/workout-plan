@@ -95,7 +95,10 @@ const LS = {
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let program   = LS.get('wp3_program', null);
 let workouts  = LS.get('wp3_workouts', {});
-let bwLog     = LS.get('wp3_bw', SEED_BW);
+// wp_bw is a dedicated persistent key that never changes across versions
+let _bwMigrated = LS.get('wp_bw', null);
+if (!_bwMigrated) { _bwMigrated = LS.get('wp3_bw', null) || SEED_BW; LS.set('wp_bw', _bwMigrated); }
+let bwLog = _bwMigrated;
 let zone2Log  = LS.get('wp3_zone2', []);
 let phases    = LS.get('wp3_phases', [{ name: 'Phase 1', start: '3/9', end: null }]);
 let activeTab = 'log';
@@ -136,7 +139,7 @@ const DAY_ORDER = Object.keys(program);
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function today() { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}`; }
-function saveAll() { LS.set('wp3_program', program); LS.set('wp3_workouts', workouts); LS.set('wp3_bw', bwLog); LS.set('wp3_zone2', zone2Log); LS.set('wp3_phases', phases); }
+function saveAll() { LS.set('wp3_program', program); LS.set('wp3_workouts', workouts); LS.set('wp_bw', bwLog); LS.set('wp3_zone2', zone2Log); LS.set('wp3_phases', phases); }
 
 function getLastSession(dayName) {
   const all = workouts[dayName] || [];
@@ -736,63 +739,138 @@ function renderAnalytics() {
 }
 
 // ── BODYWEIGHT TAB ────────────────────────────────────────────────────────────
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let bwMonthCollapsed = {};
+
+function bwMiniChart(entries) {
+  if (entries.length < 2) return '';
+  const weights = entries.map(e => e.bw);
+  const minW = Math.min(...weights), maxW = Math.max(...weights);
+  const range = maxW - minW || 0.5;
+  const W = 280, H = 44, padX = 4, padY = 6;
+  const xs = entries.map((_, i) => padX + i * (W - padX*2) / (entries.length - 1));
+  const ys = entries.map(e => H - padY - (e.bw - minW) / range * (H - padY*2));
+  const pathD = xs.map((x, i) => `${i===0?'M':'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const dots = xs.map((x, i) => `<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="2.5" fill="#fff" opacity="0.7"/>`).join('');
+  return `<div class="bw-month-chart"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <path d="${pathD}" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity="0.5"/>
+    ${dots}
+  </svg></div>`;
+}
+
 function renderBW() {
-  setHeader('Bodyweight', 'Weight & nutrition log');
-  const first = bwLog[0], last = bwLog[bwLog.length-1];
-  const change = first && last ? (last.bw - first.bw).toFixed(1) : null;
-  const cls = change > 0 ? 'green' : change < 0 ? 'red' : '';
-  const pts = bwLog.slice(-12);
-  let chartHTML = '';
-  if (pts.length > 1) {
-    const weights = pts.map(p => p.bw);
-    const minW = Math.min(...weights), maxW = Math.max(...weights);
-    const range = maxW - minW || 1;
-    const W = 300, H = 100, pad = 14;
-    const xs = pts.map((_, i) => pad + i * (W - pad*2) / (pts.length - 1));
-    const ys = pts.map(p => H - pad - (p.bw - minW) / range * (H - pad*2));
-    const pathD = xs.map((x, i) => `${i===0?'M':'L'}${x},${ys[i]}`).join(' ');
-    const dots = xs.map((x, i) => `<circle cx="${x}" cy="${ys[i]}" r="3" fill="#fff"/>`).join('');
-    chartHTML = `<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-      <path d="${pathD}" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round" opacity="0.8"/>
-      ${dots}
-      <text x="${xs[0]}" y="${H}" font-size="9" fill="var(--text3)" text-anchor="middle">${pts[0].date}</text>
-      <text x="${xs[xs.length-1]}" y="${H}" font-size="9" fill="var(--text3)" text-anchor="end">${pts[pts.length-1].date}</text>
-    </svg></div>`;
-  }
-  const rows = [...bwLog].reverse().map(e => `
-    <div class="bw-row-entry">
-      <div class="bw-entry-date">${e.date}</div>
-      <div class="bw-entry-vals">
-        <div><div class="bw-entry-val">${e.bw} lbs</div></div>
-        ${e.cals?`<div><div class="bw-entry-val">${e.cals}</div><div class="bw-entry-sub">cal</div></div>`:''}
-        ${e.protein?`<div><div class="bw-entry-val">${e.protein}g</div><div class="bw-entry-sub">protein</div></div>`:''}
+  setHeader('Bodyweight', 'Weight log');
+  const first = bwLog[0], last = bwLog[bwLog.length - 1];
+  const totalChange = first && last ? (last.bw - first.bw).toFixed(1) : null;
+  const totalCls = totalChange > 0 ? 'green' : totalChange < 0 ? 'red' : '';
+
+  // Group by month key "YYYY-M" (we treat all as 2026 for now, using month from date string)
+  const byMonth = {};
+  bwLog.forEach(e => {
+    const parts = e.date.split('/');
+    const m = parseInt(parts[0]) - 1; // 0-indexed
+    const key = `2026-${m}`;
+    if (!byMonth[key]) byMonth[key] = { month: m, entries: [] };
+    byMonth[key].entries.push(e);
+  });
+
+  // Sort months descending (most recent first)
+  const monthKeys = Object.keys(byMonth).sort((a, b) => {
+    const [ay, am] = a.split('-').map(Number);
+    const [by2, bm] = b.split('-').map(Number);
+    return ay !== by2 ? by2 - ay : bm - am;
+  });
+
+  let monthHTML = '';
+  monthKeys.forEach(key => {
+    const { month, entries } = byMonth[key];
+    const label = MONTH_NAMES[month];
+    const isCollapsed = bwMonthCollapsed[key] !== false; // default collapsed except current month
+    const currentMonth = new Date().getMonth();
+    const isCurrentMonth = month === currentMonth;
+    const actuallyCollapsed = isCurrentMonth ? (bwMonthCollapsed[key] === true) : (bwMonthCollapsed[key] !== false);
+
+    const first = entries[0], last = entries[entries.length - 1];
+    const change = entries.length > 1 ? (last.bw - first.bw).toFixed(1) : null;
+    const changeCls = change > 0 ? 'green' : change < 0 ? 'red' : 'neutral';
+    const changeStr = change !== null ? (change >= 0 ? '+' : '') + change + ' lbs' : `${first.bw} lbs`;
+
+    const rowsHTML = entries.slice().reverse().map((e, i, arr) => {
+      const prev = arr[i + 1];
+      const delta = prev ? (e.bw - prev.bw).toFixed(1) : null;
+      const deltaCls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+      const deltaStr = delta !== null ? (delta >= 0 ? '+' : '') + delta : '';
+      return `<div class="bw-entry-row">
+        <span class="bw-entry-row-date">${e.date}</span>
+        <span class="bw-entry-row-weight">${e.bw} lbs</span>
+        <span class="bw-entry-row-delta ${deltaCls}">${deltaStr}</span>
+      </div>`;
+    }).join('');
+
+    monthHTML += `<div class="card">
+      <div class="bw-month-header" onclick="toggleBWMonth('${key}')">
+        <h3>${label} 2026</h3>
+        <div class="bw-month-meta">
+          <span class="bw-month-change ${changeCls}">${changeStr}</span>
+          <span class="history-chevron ${actuallyCollapsed ? '' : 'open'}">▼</span>
+        </div>
       </div>
-    </div>`).join('');
+      <div class="history-day-body" id="bwmonth_${key}" style="${actuallyCollapsed ? 'display:none' : ''}">
+        ${bwMiniChart(entries)}
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:8px;">
+          <span>Start: ${first.bw} lbs</span>
+          <span>${entries.length} entries</span>
+          <span>End: ${last.bw} lbs</span>
+        </div>
+        ${rowsHTML}
+      </div>
+    </div>`;
+  });
+
   document.getElementById('sec-bw').innerHTML = `
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Start</div><div class="stat-val">${first?first.bw:'—'}</div></div>
-      <div class="stat-card"><div class="stat-label">Current</div><div class="stat-val">${last?last.bw:'—'}</div></div>
-      <div class="stat-card"><div class="stat-label">Change</div><div class="stat-val ${cls}">${change!==null?(change>=0?'+':'')+change:'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Start</div><div class="stat-val">${first ? first.bw : '—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Current</div><div class="stat-val">${last ? last.bw : '—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-val ${totalCls}">${totalChange !== null ? (totalChange >= 0 ? '+' : '') + totalChange : '—'}</div></div>
     </div>
-    <div class="card"><div class="card-title">Trend</div>${chartHTML||'<div class="empty" style="padding:16px">Log more entries to see chart</div>'}</div>
     <div class="card">
-      <div class="card-title">Log entry</div>
-      <div class="bw-form">
+      <div class="card-title">Log weight</div>
+      <div class="bw-form" style="grid-template-columns:1fr 1fr;">
         <input type="text" id="bw-date" placeholder="Date (e.g. 4/22)" />
         <input type="number" id="bw-val" placeholder="Weight (lbs)" step="0.1" inputmode="decimal" />
-        <input type="number" id="bw-cals" placeholder="Calories" inputmode="numeric" />
-        <input type="number" id="bw-protein" placeholder="Protein (g)" inputmode="numeric" />
       </div>
       <button class="btn btn-primary" onclick="logBW()">Add entry</button>
     </div>
-    <div class="card"><div class="card-title">Log</div>${rows||'<div class="empty">No entries yet.</div>'}</div>`;
+    ${monthHTML || '<div class="empty">No entries yet.</div>'}`;
+}
+
+function toggleBWMonth(key) {
+  const body = document.getElementById(`bwmonth_${key}`);
+  const header = body?.previousElementSibling;
+  const chevron = header?.querySelector('.history-chevron');
+  const isHidden = body?.style.display === 'none';
+  bwMonthCollapsed[key] = !isHidden;
+  if (body) body.style.display = isHidden ? '' : 'none';
+  if (chevron) chevron.classList.toggle('open', isHidden);
 }
 
 function logBW() {
   const bwVal = parseFloat(document.getElementById('bw-val').value);
   if (!bwVal) { toast('Enter a weight'); return; }
-  bwLog.push({ date: document.getElementById('bw-date').value.trim() || today(), bw: bwVal, cals: document.getElementById('bw-cals').value.trim(), protein: document.getElementById('bw-protein').value.trim() });
-  saveAll(); toast('Entry saved!'); renderBW();
+  const dateVal = document.getElementById('bw-date').value.trim() || today();
+  // Check for duplicate date and update instead of adding
+  const existing = bwLog.find(e => e.date === dateVal);
+  if (existing) { existing.bw = bwVal; }
+  else {
+    bwLog.push({ date: dateVal, bw: bwVal });
+    // Sort by date
+    bwLog.sort((a, b) => {
+      const [am, ad] = a.date.split('/').map(Number);
+      const [bm, bd] = b.date.split('/').map(Number);
+      return am !== bm ? am - bm : ad - bd;
+    });
+  }
+  saveAll(); toast('Saved!'); renderBW();
 }
 
 // ── SETTINGS TAB ──────────────────────────────────────────────────────────────
