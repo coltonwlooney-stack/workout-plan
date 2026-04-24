@@ -59,21 +59,6 @@
   </nav>
 </div>
 
-<!-- Rest Timer -->
-<div id="timerOverlay" class="timer-overlay" style="display:none">
-  <div class="timer-circle">
-    <svg viewBox="0 0 180 180">
-      <circle class="track" cx="90" cy="90" r="80"/>
-      <circle class="prog" id="timerProg" cx="90" cy="90" r="80" stroke-dasharray="502" stroke-dashoffset="0"/>
-    </svg>
-    <div class="timer-time" id="timerTime">1:30</div>
-  </div>
-  <div class="timer-label">Rest timer</div>
-  <div class="timer-btns">
-    <button class="timer-btn skip" onclick="startTimer(timerTotal)">Reset</button>
-    <button class="timer-btn stop" onclick="closeTimer()">Done</button>
-  </div>
-</div>
 
 <!-- Modal -->
 <div id="modalOverlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()"></div>

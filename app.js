@@ -107,9 +107,6 @@ let editMode  = false;
 let draft     = {};
 let historyCollapsed = {};
 
-// Timer
-let timerInt = null, timerSecs = 0, timerTotal = 0;
-
 // Init
 if (!program) {
   program = JSON.parse(JSON.stringify(DEFAULT_PROGRAM));
@@ -177,7 +174,6 @@ function toast(msg) {
 function svgIcon(name) {
   const icons = {
     trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
-    timer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
   };
   return icons[name] || '';
 }
@@ -224,48 +220,10 @@ function applyDraft(dayName) {
 }
 
 // ── TIMER ─────────────────────────────────────────────────────────────────────
-function playBeep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.18, 0.36].forEach(offset => {
-      const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 880; osc.type = 'sine';
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.14);
-      osc.start(ctx.currentTime + offset); osc.stop(ctx.currentTime + offset + 0.16);
-    });
-  } catch(e) {}
 }
 
-function vibrate() { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e) {} }
-
-function startTimer(secs) {
-  clearInterval(timerInt);
-  timerTotal = secs; timerSecs = secs;
-  const circ = 2 * Math.PI * 88;
-  document.getElementById('timerOverlay').style.display = 'flex';
-  updateTimerUI(circ);
-  timerInt = setInterval(() => {
-    timerSecs--;
-    updateTimerUI(circ);
-    if (timerSecs <= 0) {
-      clearInterval(timerInt);
-      playBeep(); vibrate();
-      document.getElementById('timerTime').textContent = 'Done!';
-      document.getElementById('timerProg').style.strokeDashoffset = circ;
-    }
   }, 1000);
 }
-
-function updateTimerUI(circ) {
-  const m = Math.floor(timerSecs / 60), s = String(timerSecs % 60).padStart(2, '0');
-  document.getElementById('timerTime').textContent = `${m}:${s}`;
-  document.getElementById('timerProg').style.strokeDashoffset = circ * (1 - timerSecs / timerTotal);
-  document.getElementById('timerProg').style.strokeDasharray = circ;
-}
-
-function closeTimer() { clearInterval(timerInt); document.getElementById('timerOverlay').style.display = 'none'; }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function setHeader(title, sub) {
@@ -279,30 +237,6 @@ function showModal(html) {
 }
 
 function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-
-function showTimerPicker() {
-  showModal(`
-    <h2>Rest timer</h2>
-    <div class="timer-grid">
-      ${[60,90,120,150,180,240,300,360].map(s => {
-        const m = Math.floor(s/60), sec = s % 60;
-        return `<button class="timer-opt" onclick="closeModal();startTimer(${s})">${m}:${String(sec).padStart(2,'0')}</button>`;
-      }).join('')}
-    </div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-align:center;">Custom (enter seconds):</div>
-    <div class="timer-custom">
-      <input type="number" id="customTimerSecs" placeholder="e.g. 105" inputmode="numeric" />
-      <button class="btn btn-secondary btn-sm" onclick="startCustomTimer()" style="white-space:nowrap;">Start</button>
-    </div>
-    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-  `);
-}
-
-function startCustomTimer() {
-  const val = parseInt(document.getElementById('customTimerSecs')?.value);
-  if (!val || val <= 0) { toast('Enter seconds'); return; }
-  closeModal(); startTimer(val);
-}
 
 // ── WORKOUT SUMMARY ───────────────────────────────────────────────────────────
 function showWorkoutSummary(dayName, newEntry, prevEntry) {
@@ -406,7 +340,6 @@ function renderLog() {
         ${addBar}
         <textarea class="ex-note" id="sessionNote" rows="2" placeholder="Session notes..." style="margin-top:16px;"></textarea>
         <button class="btn btn-primary" onclick="saveWorkout()">Save workout</button>
-        <button class="btn btn-secondary" onclick="showTimerPicker()">⏱ Rest timer</button>
       </div>`;
     }
   }
@@ -420,7 +353,12 @@ function renderExBlock(ex, ei) {
   const badge = sug ? (sug.action === 'up' ? `<span class="badge badge-up">+wt</span>` : `<span class="badge badge-hold">hold</span>`) : '';
   const typeTag = `<span class="tag ${ex.type}">${ex.type}</span>`;
   const deleteBtn = editMode ? `<button class="icon-btn danger" onclick="removeExercise(${ei})">${svgIcon('trash')}</button>` : '';
-  const timerBtn = !editMode ? `<button class="icon-btn" onclick="showTimerPicker()" title="Rest timer">${svgIcon('timer')}</button>` : '';
+
+  // Name: editable input in edit mode, plain text otherwise
+  const nameHTML = editMode
+    ? `<input class="ex-name-input" type="text" id="exname_${ei}" value="${ex.name}" onblur="renameExercise(${ei}, this.value)" placeholder="Exercise name" />`
+    : `<div class="ex-name">${ex.name}${badge}</div>`;
+
   const sets = Array.from({length: ex.sets}, (_, si) => `
     <div class="set-col">
       <div class="set-num">S${si+1}</div>
@@ -429,10 +367,14 @@ function renderExBlock(ex, ei) {
         <div><input type="number" inputmode="numeric" id="r_${ei}_${si}" placeholder="reps" oninput="this.classList.toggle('has-value',!!this.value)" /><div class="set-lbl">reps</div></div>
       </div>
     </div>`).join('');
+
   return `<div class="exercise-block">
     <div class="ex-header">
-      <div><div class="ex-name">${ex.name}${badge}</div><div style="margin-top:4px;">${typeTag}</div></div>
-      <div class="ex-actions"><span class="ex-scheme">${ex.sets}×${ex.repRange}</span>${timerBtn}${deleteBtn}</div>
+      <div style="flex:1;min-width:0;">
+        ${nameHTML}
+        ${!editMode ? '' : ''}<div style="margin-top:4px;">${typeTag}</div>
+      </div>
+      <div class="ex-actions"><span class="ex-scheme">${ex.sets}×${ex.repRange}</span>${deleteBtn}</div>
     </div>
     <div class="sets-row">${sets}</div>
     <textarea class="ex-note" id="note_${ei}" rows="1" placeholder="Notes..."></textarea>
@@ -463,6 +405,21 @@ function removeExercise(ei) {
   program[selDay].exercises.splice(ei, 1);
   if (draft[selDay]) delete draft[selDay].exercises[ex.name];
   saveAll(); renderLog();
+}
+
+function renameExercise(ei, newName) {
+  newName = newName.trim();
+  if (!newName) return;
+  const ex = program[selDay].exercises[ei];
+  if (newName === ex.name) return;
+  // Update draft key if it exists
+  if (draft[selDay] && draft[selDay].exercises[ex.name]) {
+    draft[selDay].exercises[newName] = draft[selDay].exercises[ex.name];
+    delete draft[selDay].exercises[ex.name];
+  }
+  ex.name = newName;
+  saveAll();
+  // Don't re-render — user may still be editing other fields. Name is saved on blur.
 }
 
 function saveWorkout() {
@@ -554,7 +511,7 @@ function renderHistory() {
   lifts.forEach(name => {
     const sessions = (workouts[name] || []).slice().reverse();
     if (!sessions.length) return;
-    const isCollapsed = historyCollapsed[name] === true;
+    const isCollapsed = historyCollapsed[name] !== false;
     const count = sessions.length;
     html += `<div class="card">
       <div class="history-day-header" onclick="toggleHistoryDay('${name}')">
@@ -580,7 +537,7 @@ function renderHistory() {
   });
 
   if (zone2Log.length) {
-    const isCollapsed = historyCollapsed['Zone 2'] === true;
+    const isCollapsed = historyCollapsed['Zone 2'] !== false;
     html += `<div class="card">
       <div class="history-day-header" onclick="toggleHistoryDay('Zone 2')">
         <h3>Zone 2 <span style="font-weight:400;color:var(--text3)">(${zone2Log.length})</span></h3>
