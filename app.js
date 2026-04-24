@@ -219,12 +219,6 @@ function applyDraft(dayName) {
   if (snEl && d.sessionNote) snEl.value = d.sessionNote;
 }
 
-// ── TIMER ─────────────────────────────────────────────────────────────────────
-}
-
-  }, 1000);
-}
-
 // ── MODALS ────────────────────────────────────────────────────────────────────
 function setHeader(title, sub) {
   document.querySelector('#appHeader h1').textContent = title;
